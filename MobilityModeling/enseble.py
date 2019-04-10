@@ -5,7 +5,6 @@ from math import sqrt
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 import pandas as pd
 import seaborn as sns
 import tensorflow as tf
@@ -14,11 +13,10 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
-from tensorflow.keras.layers import (GRU, LSTM, Activation, BatchNormalization,
-                                     Conv1D, Dense, Dropout, Flatten,
-                                     GlobalAveragePooling1D, Input, Lambda,
-                                     MaxPooling1D, Permute, RepeatVector,
-                                     Reshape, TimeDistributed, concatenate)
+from tensorflow.keras.layers import (
+    GRU, LSTM, Activation, BatchNormalization, Conv1D, Dense, Dropout, Flatten,
+    GlobalAveragePooling1D, GlobalMaxPooling1D, Input, Lambda, MaxPooling1D,
+    Permute, RepeatVector, Reshape, TimeDistributed, concatenate)
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.optimizers import Adam
 
@@ -27,9 +25,7 @@ sns.set_palette("husl")
 
 warnings.filterwarnings('ignore')
 
-
-dataset = pd.read_csv(
-    "/home/aggelos/Dropbox/Diplomatiki/MObility/mobility_dataset.csv", index_col=0)
+dataset = pd.read_csv("dataset.csv", index_col=0)
 
 look_ahead = 1  # how far into the future are we trying to predict?
 
@@ -61,7 +57,9 @@ def preprocess_df(df, predict_cell, look_ahead, lookback):
 
     for i in df.values:  # iterate over values
         prev_days.append([n for n in i[:-1]])  # store all but the target
-        if len(prev_days) == lookback:  # make sure we have the right number of sequences sequences!
+        if len(
+                prev_days
+        ) == lookback:  # make sure we have the right number of sequences sequences!
             # append the sequences
             sequential_data.append([np.array(prev_days), i[-1]])
 
@@ -86,7 +84,7 @@ def preprocess_df(df, predict_cell, look_ahead, lookback):
     # make sure both lists are only up to the shortest length.
     downs = downs[:lower]
 
-    sequential_data = ups+downs  # add them together
+    sequential_data = ups + downs  # add them together
     random.shuffle(sequential_data)
 
     X = []
@@ -94,14 +92,13 @@ def preprocess_df(df, predict_cell, look_ahead, lookback):
     for seq, target in sequential_data:
         X.append(seq)
         y.append(target)
-
     return np.array(X), y
 
 
 """ We need to sample out some data """
 df = dataset
 times = sorted(df.index.values)
-last_5pct = times[-int(0.2*len(times))]
+last_5pct = times[-int(0.2 * len(times))]
 
 validation_df = df[(df.index >= last_5pct)]
 train_df = df[(df.index < last_5pct)]
@@ -130,12 +127,14 @@ def fit_mlp(train_x, train_y):
 
     opt = tf.keras.optimizers.Adam(lr=0.001, decay=1e-6)
 
-    model.compile(loss='sparse_categorical_crossentropy',
-                  optimizer=opt,
-                  metrics=['accuracy'])
+    model.compile(
+        loss='sparse_categorical_crossentropy',
+        optimizer=opt,
+        metrics=['accuracy'])
 
     history = model.fit(
-        train_x, train_y,
+        train_x,
+        train_y,
         batch_size=32,
         epochs=20,
         validation_split=0.1,
@@ -143,7 +142,7 @@ def fit_mlp(train_x, train_y):
 
     return model, history
 
-# Lets build the model
+    # Lets build the model
 
 
 def fit_gru(train_x, train_y):
@@ -165,12 +164,14 @@ def fit_gru(train_x, train_y):
 
     opt = tf.keras.optimizers.Adam(lr=0.001, decay=1e-6)
 
-    model.compile(loss='sparse_categorical_crossentropy',
-                  optimizer=opt,
-                  metrics=['accuracy'])
+    model.compile(
+        loss='sparse_categorical_crossentropy',
+        optimizer=opt,
+        metrics=['accuracy'])
 
     history = model.fit(
-        train_x, train_y,
+        train_x,
+        train_y,
         batch_size=32,
         epochs=20,
         verbose=0,
@@ -191,24 +192,27 @@ def fit_fcn(train_x, train_y):
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
 
-    x = Conv1D(128, 4, padding='same')(x)
-    x = Activation('relu')(x)
+    x = Conv1D(64, 4, padding='same')(x)
+    #x = Activation('relu')(x)
 
-    x = GlobalAveragePooling1D()(x)
+    x = GlobalMaxPooling1D()(x)
 
     prediction = Dense(2, activation='softmax')(x)
 
     model = Model(inputs, prediction)
 
-    model.compile(loss='sparse_categorical_crossentropy',
-                  optimizer=tf.keras.optimizers.Adam(lr=0.001, decay=1e-6),
-                  metrics=['accuracy'])
+    model.compile(
+        loss='sparse_categorical_crossentropy',
+        optimizer=tf.keras.optimizers.Adam(lr=0.001, decay=1e-6),
+        metrics=['accuracy'])
 
-    history = model.fit(train_x, train_y,
-                        batch_size=32,
-                        epochs=20,
-                        validation_split=0.1,
-                        verbose=0)
+    history = model.fit(
+        train_x,
+        train_y,
+        batch_size=32,
+        epochs=20,
+        validation_split=0.1,
+        verbose=0)
 
     return model, history
 
@@ -226,15 +230,18 @@ def fit_cnn_gru(train_x, train_y):
 
     model = Model(inputs, preds)
 
-    model.compile(loss='sparse_categorical_crossentropy',
-                  optimizer=tf.keras.optimizers.Adam(lr=0.001, decay=1e-6),
-                  metrics=['accuracy'])
+    model.compile(
+        loss='sparse_categorical_crossentropy',
+        optimizer=tf.keras.optimizers.Adam(lr=0.001, decay=1e-6),
+        metrics=['accuracy'])
 
-    history = model.fit(train_x, train_y,
-                        batch_size=32,
-                        epochs=20,
-                        validation_split=0.1,
-                        verbose=0)
+    history = model.fit(
+        train_x,
+        train_y,
+        batch_size=32,
+        epochs=20,
+        validation_split=0.1,
+        verbose=0)
 
     return model, history
 
@@ -244,43 +251,39 @@ test_x, test_y = preprocess_df(validation_df, predict_cell, look_ahead, 16)
 cnn_gru, _ = fit_cnn_gru(train_x, train_y)
 cnn_gru_preds = cnn_gru.predict(test_x)
 
-
-train_x, train_y = preprocess_df(train_df, predict_cell, look_ahead, 2)
-test_x, test_y = preprocess_df(validation_df, predict_cell, look_ahead, 2)
+train_x, train_y = preprocess_df(train_df, predict_cell, look_ahead, 16)
+test_x, test_y = preprocess_df(validation_df, predict_cell, look_ahead, 16)
 mlp, _ = fit_mlp(train_x, train_y)
 mlp_preds = mlp.predict(test_x)
 
-train_x, train_y = preprocess_df(train_df, predict_cell, look_ahead, 2)
-test_x, test_y = preprocess_df(validation_df, predict_cell, look_ahead, 2)
+train_x, train_y = preprocess_df(train_df, predict_cell, look_ahead, 16)
+test_x, test_y = preprocess_df(validation_df, predict_cell, look_ahead, 16)
 gru, _ = fit_gru(train_x, train_y)
 gru_preds = gru.predict(test_x)
 
-
-train_x, train_y = preprocess_df(train_df, predict_cell, look_ahead, 64)
-test_x, test_y = preprocess_df(validation_df, predict_cell, look_ahead, 64)
+train_x, train_y = preprocess_df(train_df, predict_cell, look_ahead, 16)
+test_x, test_y = preprocess_df(validation_df, predict_cell, look_ahead, 16)
 fcn, _ = fit_fcn(train_x, train_y)
 fcn_preds = fcn.predict(test_x)
 
-predictions = (mlp_preds[-210:, :] +
-               fcn_preds[-210:, :] + gru_preds[-210:, :] + cnn_gru_preds[-210:, :])/4
+predictions = (mlp_preds[-210:, :] + fcn_preds[-210:, :] + gru_preds[-210:, :]
+               + cnn_gru_preds[-210:, :]) / 4
 predictions = predictions[:, 1].round()
 acc_score = accuracy_score(test_y[-50:], predictions[-50:])
-print(acc_score)
-
-predictions = pd.DataFrame({'mlp': mlp_preds[-210:, 1],
-                            'gru': gru_preds[-210:, 1],
-                            'fcn': fcn_preds[-210:, 1],
-                            'cnn-gru': cnn_gru_preds[-210:, 1]})
-
-data = pd.DataFrame({'mlp': mlp_preds[-210:, 1],
-                     'gru': gru_preds[-210:, 1],
-                     'fcn': fcn_preds[-210:, 1],
-                     'cnn-gru': cnn_gru_preds[-210:, 1],
-                     'actual': test_y[-210:]})
-
-
-# print(data)
-
+print(f"Same weight accuracy score; {acc_score}%")
+predictions = pd.DataFrame({
+    'mlp': mlp_preds[-210:, 1],
+    'gru': gru_preds[-210:, 1],
+    'fcn': fcn_preds[-210:, 1],
+    'cnn-gru': cnn_gru_preds[-210:, 1]
+})
+data = pd.DataFrame({
+    'mlp': mlp_preds[-210:, 1],
+    'gru': gru_preds[-210:, 1],
+    'fcn': fcn_preds[-210:, 1],
+    'cnn-gru': cnn_gru_preds[-210:, 1],
+    'actual': test_y[-210:]
+})  # print(data)
 predictions = predictions.values
 
 y = test_y[-210:]
@@ -293,25 +296,42 @@ y_train = y[:-50]
 
 
 def nn(train_x, train_y):
-    inputs = Input(shape=(4,))
-    x = Dense(32, activation='relu')(inputs)
-    output = Dense(1)(inputs)
+    inputs = Input(shape=(4, ))
+    x = Dense(64, activation='linear')(inputs)
+    output = Dense(1)(x)
 
     model = Model(inputs, output)
     model.compile(optimizer='adam', loss='mse')
 
     stop = tf.keras.callbacks.EarlyStopping(
-        monitor='val_loss', min_delta=0, patience=20, verbose=0, mode='auto', baseline=None)
+        monitor='val_loss',
+        min_delta=0,
+        patience=30,
+        verbose=0,
+        mode='auto',
+        baseline=None)
 
-    history = model.fit(train_x, train_y, verbose=0,
-                        epochs=800, validation_split=0.2,
-                        callbacks=[stop])
+    history = model.fit(
+        train_x,
+        train_y,
+        verbose=0,
+        epochs=800,
+        validation_split=0.2,
+        callbacks=[stop])
 
     return model, history
 
 
-model, _ = nn(x_train, y_train)
-final_preds = model.predict(x_test)
-final_preds = final_preds.round()
-final_acc_score = accuracy_score(y_test, final_preds)
-print(f"Final Accuracy: {final_acc_score}")
+final_acc_score_list = []
+for i in range(30):
+    model, _ = nn(x_train, y_train)
+    final_preds = model.predict(x_test)
+    final_preds = final_preds.round()
+    final_acc_score = accuracy_score(y_test, final_preds)
+    final_acc_score_list.append(final_acc_score)
+
+final_acc_score_mean = np.mean(final_acc_score_list)
+final_acc_score_std = np.std(final_acc_score_list)
+print(f"Final Accuracy: {final_acc_score_mean} +/- {final_acc_score_std} %")
+plt.boxplot(final_acc_score_list)
+plt.show()

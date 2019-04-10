@@ -6,7 +6,7 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import numpy as np
 
-import modin.pandas as pd
+import pandas as pd
 import seaborn as sns
 from hyperopt import STATUS_OK, Trials, fmin, hp, tpe
 from sklearn.linear_model import ElasticNet, Lasso
@@ -27,7 +27,7 @@ dataset = pd.read_csv(
     "/home/aggelos/Dropbox/Diplomatiki/MObility/mobility_dataset.csv", index_col=0)
 
 look_ahead = 1  # how far into the future are we trying to predict?
-LOOKBACK = 1
+LOOKBACK = 128
 
 predict_cell = "5ALTE"  # The cell of interest
 
