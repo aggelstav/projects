@@ -138,3 +138,7 @@ if __name__ == '__main__':
     # list top 3 configs
     for cfg, error in scores[:3]:
         print(cfg, error)
+
+    """ Best values are 0, 0, 2
+                        0, 0, 1, 0
+                        t"""
