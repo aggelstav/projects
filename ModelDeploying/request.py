@@ -1,8 +1,8 @@
 import requests
 import json
 
-url = 'http://localhost:5000/api'
-with open('test.json') as json_file:
+url = 'http://0.0.0.0:8500'
+with open('test_128.json') as json_file:
     json_data = json.load(json_file)
 
 print(json_data)

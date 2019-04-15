@@ -71,16 +71,16 @@ def preprocess_df(df, predict_cell, look_ahead, lookback):
     return np.array(X), y
 
 
-lookback = 64  # looking back window of 128 timesteps where each timestep
+lookback = 128  # looking back window of 128 timesteps where each timestep
 # is 15 minutes
 
-look_ahead = 2  # how far into the future are we trying to predict?
+look_ahead = 1  # how far into the future are we trying to predict?
 
 predict_cell = "4CLTE"  # The cell of interest
 
 """ We need to sample out some data """
 df = pd.read_csv(
-    "/home/aggelos/Dropbox/Diplomatiki/MObility/mobility_dataset.csv", index_col=0)
+    "/home/aggelos/Downloads/Traffic_Stats/new_dataset.csv", index_col=0, header=[1])
 
 times = sorted(df.index.values)
 last_5pct = times[-int(0.2*len(times))]
